@@ -65,6 +65,7 @@ export class LoginPage implements OnInit {
     }
 
     this.cargando.set(true);
+    const loading = await this.notify.showLoading('Iniciando sesión...');
     try {
       const { email, password } = this.form.getRawValue();
       await this.auth.loginWithEmail(email, password);
@@ -73,6 +74,7 @@ export class LoginPage implements OnInit {
       const aviso = this.auth.consumirAvisoSuspension();
       await this.notify.error(aviso !== null ? this.textoSuspension(aviso) : mensajeErrorAuth(error));
     } finally {
+      await loading.dismiss();
       this.cargando.set(false);
     }
   }
@@ -85,6 +87,7 @@ export class LoginPage implements OnInit {
   /** Inicia el flujo OAuth con Google. */
   async iniciarConGoogle(): Promise<void> {
     this.cargando.set(true);
+    const loading = await this.notify.showLoading('Conectando con Google...');
     try {
       await this.auth.loginWithGoogle();
       // Web: el navegador redirige. Nativo: se abre el navegador del sistema y
@@ -92,6 +95,7 @@ export class LoginPage implements OnInit {
     } catch (error) {
       await this.notify.error(mensajeErrorAuth(error));
     } finally {
+      await loading.dismiss();
       this.cargando.set(false);
     }
   }
