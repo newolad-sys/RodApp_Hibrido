@@ -79,6 +79,50 @@ export interface DocumentoInsert {
   recordatorio_activo: boolean; // default true
 }
 
+/* ===================== Consulta RUNT (PlacApi) ======================= */
+
+/** Tipos de documento que acepta el RUNT (via PlacApi). */
+export type TipoDocumentoRunt = 'CC' | 'CE' | 'NIT' | 'PA' | 'TI' | 'CD' | 'PPT' | 'RC';
+
+/**
+ * Respuesta de la Edge Function `consulta-runt`. Es un resumen de la ficha
+ * del RUNT: el shape debe coincidir con `RuntResumen` en
+ * `supabase/functions/consulta-runt/index.ts`. Fechas en YYYY-MM-DD.
+ */
+export interface RuntResumen {
+  placa: string;
+  vehiculo: {
+    marca: string | null;
+    linea: string | null;
+    modelo: string | null; // año modelo
+    cilindraje: number | null;
+    color: string | null;
+    clase: string | null;
+    servicio: string | null;
+    combustible: string | null;
+    estado: string | null;
+    fechaMatricula: string | null;
+    organismoTransito: string | null;
+  };
+  soat: {
+    numeroPoliza: string;
+    aseguradora: string;
+    fechaInicio: string;
+    fechaVencimiento: string;
+    vigente: boolean;
+  } | null;
+  rtm: {
+    numeroCertificado: string;
+    cda: string;
+    fechaExpedicion: string;
+    fechaVencimiento: string;
+    vigente: boolean;
+  } | null;
+  alertas: string[];
+  fuente: 'placapi' | 'cache' | 'mock';
+  consultadoAt: string;
+}
+
 /* ===================== Combustible / Mantenimiento =================== */
 
 export interface CombustibleInsert {
