@@ -1,7 +1,7 @@
 /**
  * Configuracion de entorno - DESARROLLO.
  *
- * Reutiliza el mismo proyecto Supabase del RodApp original (Android).
+ * Proyecto Supabase `smkhwldylnztluitsciz` (reemplaza al original, que dejo de existir).
  * La clave `anonKey` es publica por diseno (RLS protege los datos en el
  * servidor); aun asi, no subas aqui la `service_role`.
  *
@@ -23,7 +23,7 @@ export const environment = {
    *   Dashboard > Authentication > URL Configuration > Redirect URLs
    */
   auth: {
-    redirectWeb: 'https://rodapp.example.com/auth/callback',
+    redirectWeb: 'http://localhost:8100/auth/callback',
     redirectNative: 'com.rodapp.hibrido://auth/callback',
   },
 } as const;

@@ -51,13 +51,12 @@ Antes de probar el login, edita `src/environments/environment.ts` con la URL y l
 `anon key` de tu proyecto Supabase, y registra las *Redirect URLs* (ver
 `supabase/README.md`).
 
-> ⚠️ **El backend que viene configurado ya no responde.** Las credenciales
-> commiteadas apuntan al proyecto Supabase `erttcudseqjrpyathmal`, cuyo dominio
-> dejó de resolver (verificado el 2026-10-11). Mientras no se cambien, la app
-> muestra *"Sin conexión con el servidor"* en cualquier registro o inicio de
-> sesión. Hay que apuntar los dos `environment*.ts` a un proyecto vivo y volver
-> a aplicar las migraciones de `supabase/migrations/`.
-> Pasos exactos en [`AVANCES.md`](AVANCES.md) §0.
+> ℹ️ Las credenciales commiteadas apuntan al proyecto Supabase
+> `smkhwldylnztluitsciz`, que reemplazó al original (`erttcudseqjrpyathmal`,
+> que dejó de existir en 2026-10). El esquema de `supabase/migrations/` ya está
+> presente en el proyecto nuevo (verificado el 2026-11-10).
+> Si la app muestra *"Sin conexión con el servidor"*, revisa primero que el
+> proyecto siga vivo: `curl -i https://smkhwldylnztluitsciz.supabase.co/auth/v1/health`.
 
 ## Compilar y ejecutar en móvil
 

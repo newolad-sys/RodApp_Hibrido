@@ -16,7 +16,7 @@
     "android": "npm run build && cap sync android && cap open android",
     "ios": "npm run build && cap sync ios && cap open ios",
     "db:login": "supabase login",
-    "db:link": "supabase link --project-ref erttcudseqjrpyathmal",
+    "db:link": "supabase link --project-ref smkhwldylnztluitsciz",
     "db:push": "supabase db push",
     "db:diff": "supabase db diff",
     "db:start": "supabase start",
