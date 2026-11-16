@@ -5,8 +5,8 @@ last 2 Firefox versions
 last 2 Edge major versions
 last 2 Safari major versions
 last 2 iOS major versions
-Chrome >= 61
-ChromeAndroid >= 61
-Firefox >= 63
-Safari >= 13
-iOS >= 13
+Chrome >= 67
+ChromeAndroid >= 67
+Firefox >= 68
+Safari >= 14
+iOS >= 14
