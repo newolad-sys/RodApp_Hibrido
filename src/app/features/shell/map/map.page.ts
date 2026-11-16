@@ -10,8 +10,10 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AlertController, IonContent, IonHeader, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 import * as maplibregl from 'maplibre-gl';
+import { Geolocation } from '@capacitor/geolocation';
 
 // MapLibre 6 busca su Web Worker junto a su propio .mjs (`import.meta.url`),
 // pero al empaquetar con Angular ese archivo no existe en la raiz del sitio
@@ -197,30 +199,28 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.status = `Haz clic en el mapa para fijar el ${which === 'origin' ? 'origen' : 'destino'}.`;
   }
 
-  useMyLocation(): void {
-    if (!navigator.geolocation) {
-      this.status = 'Este navegador no permite obtener la ubicación.';
-      return;
+  async useMyLocation(): Promise<void> {
+  this.status = 'Solicitando permiso de ubicación…';
+  try {
+    if (Capacitor.isNativePlatform()) {
+      const perm = await Geolocation.requestPermissions();
+      if (perm.location !== 'granted') {
+        this.status = 'No se concedió permiso. Puedes escribir el origen o elegirlo en el mapa.';
+        this.refreshView();
+        return;
+      }
     }
-    this.status = 'Solicitando permiso de ubicación…';
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const point = { lat: position.coords.latitude, lng: position.coords.longitude };
-        this.invalidateRouteResults();
-        this.setEndpoint('origin', point);
-        this.map?.flyTo({ center: [point.lng, point.lat], zoom: 15 });
-        this.status = 'Ubicación actual asignada como origen.';
-        this.refreshView();
-      },
-      (error) => {
-        this.status = error.code === 1
-          ? 'No se concedió permiso. Puedes escribir el origen o elegirlo en el mapa.'
-          : 'No se pudo obtener la ubicación; puedes escribir el origen.';
-        this.refreshView();
-      },
-      { enableHighAccuracy: true, timeout: 12000 },
-    );
+    const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 12000 });
+    const point = { lat: position.coords.latitude, lng: position.coords.longitude };
+    this.invalidateRouteResults();
+    this.setEndpoint('origin', point);
+    this.map?.flyTo({ center: [point.lng, point.lat], zoom: 15 });
+    this.status = 'Ubicación actual asignada como origen.';
+  } catch {
+    this.status = 'No se pudo obtener la ubicación; puedes escribir el origen.';
   }
+  this.refreshView();
+}
 
   onLocationInput(which: 'origin' | 'destination', value: string): void {
     if (which === 'origin') this.originAddress = value;

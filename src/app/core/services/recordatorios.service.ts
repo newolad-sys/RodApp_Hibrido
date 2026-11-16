@@ -123,6 +123,8 @@ export class RecordatoriosService {
     await this.cancelarPendientes();
 
     if (avisos.length > 0 && (await this.asegurarPermiso())) {
+      const perm = await LocalNotifications.requestPermissions();
+      if (perm.display !== 'granted') return;
       await LocalNotifications.schedule({ notifications: avisos });
     }
     this.ultimaFirma = firma;
