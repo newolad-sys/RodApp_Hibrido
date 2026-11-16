@@ -10,8 +10,15 @@ yarn-error.log*
 /.angular/cache
 *.tsbuildinfo
 
-# --- Capacitor / nativo (se regeneran con `npx cap add`) ---
-/android
+# --- Capacitor / nativo ---
+/android/.gradle/
+/android/.idea/
+/android/local.properties
+/android/**/build/
+/android/app/google-services.json
+/android/app/src/main/assets/public/
+/android/app/src/main/assets/capacitor.config.json
+/android/app/src/main/assets/cordova.plugins.json
 /ios
 
 # --- Entorno / secretos ---

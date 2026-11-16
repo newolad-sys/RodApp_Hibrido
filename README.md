@@ -21,9 +21,9 @@ Fundación Universitaria Compensar · Ingeniería de Software · VII semestre ·
 | | |
 |---|---|
 | **Título de la solución** | RodApp Híbrido — gestión integral de motocicletas |
-| **Integrante 1** | _Nombre completo_ |
-| **Integrante 2** | _Nombre completo_ |
-| **Integrante 3** | _Nombre completo_ |
+| **Integrante 1** | _Oscar Leonardo Andrade Diaz_ |
+| **Integrante 2** | _Diego Alejandro Cala Espitia_ |
+| **Integrante 3** | _Cristian David Collazos Bocanegra_ |
 
 ### Alcance logrado frente al planteamiento inicial
 
