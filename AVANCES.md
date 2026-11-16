@@ -5,11 +5,30 @@ reiniciar el equipo.
 
 - **Ubicación:** `C:\Users\EQUIPO\Documents\Ucompensar\7mo Semestre\Desarrollo apps hibridas\RodApp_Hibrido`
 - **Stack:** Ionic 8 (standalone) + Angular 18 (standalone, sin NgModules) + Capacitor 6 + Supabase (backend único). Estado con signals.
-- **Última actualización:** 2026-10-12
+- **Última actualización:** 2026-10-11
 
 ---
 
-## 0. Bloqueador actual (2026-10-11) — el backend no responde
+## 0. Backend Supabase — repuntado al proyecto nuevo (actualizado 2026-11-10)
+
+**Estado al 2026-11-10 (rama `Diego`):** el bloqueador está prácticamente
+resuelto.
+
+- ✅ Los dos `environment*.ts` ya apuntan a `smkhwldylnztluitsciz` (lo hizo
+  Diego) y el ref viejo se reemplazó en `package.json` (`db:link`),
+  `supabase/README.md`, `CONTRIBUTING.md` y `README.md`.
+- ✅ `/auth/v1/health` responde `200` con la clave publicable.
+- ✅ Las 9 tablas del esquema existen en el proyecto nuevo, y también las
+  columnas de las migraciones 2 y 3 (`costo`, `lugar`, `motos.updated_at`).
+  Comprobado vía REST con la clave publicable. Falta confirmar con
+  `npm run db:link` + `npx supabase migration list` que el historial de
+  migraciones del proyecto coincide con `supabase/migrations/`.
+- ✅ `redirectWeb` de desarrollo restaurado a `http://localhost:8100/auth/callback`
+  (había quedado con el placeholder de producción).
+- ⏳ Registrar las *Redirect URLs* en el proyecto nuevo (Authentication > URL
+  Configuration) y repetir la prueba de navegador de §3.
+
+Lo que sigue es el registro histórico del problema (2026-10-11).
 
 Al probar el registro en el navegador (la prueba que venía pendiente desde el
 2026-09-13) la app devolvió **"Sin conexión con el servidor. Verifica tu
@@ -52,7 +71,9 @@ datos: ni registro, ni login, ni los 4 formularios, ni el alta de moto.
 ## 1. Estado de Git
 
 - Repo en GitHub: `https://github.com/newolad/RodApp_Hibrido.git`.
-- **Rama de trabajo actual: `Oscar`**, ya subida y sincronizada con `origin/Oscar`.
+- **Rama de trabajo actual: `Diego`** (desde 2026-11-10): parte de `Oscar` y
+  agrega el mapa con MapLibre, las vistas alineadas con Figma y el cambio al
+  proyecto Supabase nuevo. `Oscar` queda como rama anterior.
 - `main` solo tiene el commit inicial del scaffold; el desarrollo real vive en `Oscar`.
 - Flujo de ramas y cómo abrir un PR: ver [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - ⚠️ **El historial se reescribió el 2026-10-11.** Se limpiaron los mensajes
@@ -166,6 +187,20 @@ Placeholders comparten `SectionPlaceholderComponent` (coherencia visual).
    Ajustes.
 3. **Login con Google**: configuración externa pendiente (ver §3 "Backend
    Supabase" más abajo).
+
+### Consulta RUNT (PlacApi) — código listo, falta desplegar (2026-11-11)
+- ✅ Edge Function `supabase/functions/consulta-runt` (llama a `POST
+  /api/consulta` de PlacApi; cache 24 h + tope diario por usuario), migración
+  `20261110000000_consultas_runt.sql`, `RuntService` y botón "Consultar RUNT"
+  en *Registrar moto* (autocompleta marca/modelo/cilindrada y guarda SOAT/RTM).
+- Arranca en **modo `mock`** (datos ficticios, 0 créditos). Detalle y secretos
+  en `supabase/README.md` § "Consulta RUNT".
+- ⏳ Pendiente: `npm run db:push`, `npx supabase functions deploy
+  consulta-runt`, probar en mock y, cuando se quiera datos reales, crear la
+  API key en placapi.com y `supabase secrets set PLACAPI_MODE=live
+  PLACAPI_KEY=...`.
+- Sin verificar: PlacApi documenta un sandbox (`sandbox.placapi.com`) pero no
+  publica su host de API ni las placas de prueba; por eso existe el modo mock.
 
 ### Backend Supabase
 - 🔴 **El proyecto `erttcudseqjrpyathmal` dejó de responder (§0).** Todo lo que

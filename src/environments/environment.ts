@@ -1,7 +1,7 @@
 /**
  * Configuracion de entorno - DESARROLLO.
  *
- * Reutiliza el mismo proyecto Supabase del RodApp original (Android).
+ * Proyecto Supabase `smkhwldylnztluitsciz` (reemplaza al original, que dejo de existir).
  * La clave `anonKey` es publica por diseno (RLS protege los datos en el
  * servidor); aun asi, no subas aqui la `service_role`.
  *
@@ -12,9 +12,9 @@ export const environment = {
   production: false,
 
   supabase: {
-    url: 'https://erttcudseqjrpyathmal.supabase.co',
+    url: 'https://smkhwldylnztluitsciz.supabase.co',
     anonKey:
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVydHRjdWRzZXFqcnB5YXRobWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1MTUwMzUsImV4cCI6MjA5MTA5MTAzNX0.zmyADFrL2iPvGMhy9eU2SQ7VWZsF_h2E2D86RpMzgWA',
+      'sb_publishable_TSFfQV3-2h7Hv2vcbspPfQ_vr9V7134',
   },
 
   /**

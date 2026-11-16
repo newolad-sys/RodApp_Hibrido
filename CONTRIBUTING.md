@@ -12,7 +12,7 @@ git checkout Oscar        # rama de trabajo actual (main solo tiene el primer co
 npm install
 ```
 
-Pide a quien administre el proyecto Supabase (`erttcudseqjrpyathmal`):
+Pide a quien administre el proyecto Supabase (`smkhwldylnztluitsciz`):
 - La **URL** y la **anon key** del proyecto, para pegarlas en
   `src/environments/environment.ts` (ver `.env.example` como referencia de
   qué variables existen — Angular no lee `.env` en runtime).

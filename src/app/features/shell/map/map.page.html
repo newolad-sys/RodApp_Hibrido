@@ -1,0 +1,158 @@
+<ion-header class="ion-no-border map-header">
+  <ion-toolbar><ion-title>Mapa y lluvia</ion-title></ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="map-page">
+  <main class="map-layout">
+    <section class="planner card" aria-label="Planificador de recorrido">
+      <div class="fields">
+        <label class="location-field">
+          <span><i class="point-dot origin-dot"></i>Origen</span>
+          <input
+            [value]="originAddress"
+            (input)="onLocationInput('origin', $any($event.target).value)"
+            (keyup.enter)="calculateRoute()"
+            autocomplete="street-address"
+            placeholder="Mi ubicación o una dirección en Bogotá"
+            aria-label="Punto de origen"
+          >
+        </label>
+        <label class="location-field">
+          <span><i class="point-dot destination-dot"></i>Destino</span>
+          <input
+            [value]="destinationAddress"
+            (input)="onLocationInput('destination', $any($event.target).value)"
+            (keyup.enter)="calculateRoute()"
+            autocomplete="street-address"
+            placeholder="Ej. Parque Simón Bolívar, Bogotá"
+            aria-label="Punto de destino"
+          >
+        </label>
+      </div>
+
+      <div class="actions">
+        <button class="button" type="button" (click)="swapLocations()" [disabled]="calculatingRoute || loadingMap" aria-label="Intercambiar origen y destino">⇄ Intercambiar</button>
+        <button class="button primary" type="button" (click)="calculateRoute()" [disabled]="calculatingRoute || loadingMap">
+          {{ calculatingRoute ? 'Calculando…' : 'Calcular ruta' }}
+        </button>
+        <button class="button" type="button" (click)="useMyLocation()" [disabled]="loadingMap">Mi ubicación</button>
+        <button class="button" type="button" (click)="chooseOnMap('origin')" [disabled]="loadingMap">Elegir origen en mapa</button>
+        <button class="button" type="button" (click)="chooseOnMap('destination')" [disabled]="loadingMap">Elegir destino en mapa</button>
+        <button
+          class="button"
+          [class.primary]="route && !weatherResults.length"
+          type="button"
+          (click)="analyzeRain()"
+          [disabled]="analyzingRain || !route"
+        >
+          {{ analyzingRain ? 'Analizando clima…' : '🌧 Analizar lluvia en ruta' }}
+        </button>
+        <button class="button" type="button" (click)="enableReportMode()" [disabled]="loadingMap">⚠ Reportar punto</button>
+        <button class="button quiet" type="button" (click)="clearRoute()">Limpiar</button>
+      </div>
+
+      <p class="status" aria-live="polite">{{ status }}</p>
+      @if (routeSummary) {
+        <div class="route-summary" aria-live="polite">
+          <span class="summary-icon">🏍</span>
+          <div class="summary-details">
+            <div class="summary-title-row">
+              <span class="route-badge">Ruta activa seleccionada</span>
+              <strong class="route-main-metric">{{ routeSummary }}</strong>
+            </div>
+            <small class="route-help-text">
+              La línea resaltada en color <strong>cian (#11b4d4)</strong> es tu recorrido. Puedes tocar el botón "🌧 Analizar lluvia en ruta" para ver qué tramos estarán mojados.
+            </small>
+          </div>
+        </div>
+      }
+    </section>
+
+    <div class="content-grid">
+      <section class="map-card card" aria-label="Mapa interactivo">
+        @if (loadingMap) {
+          <div class="map-loading"><span class="spinner"></span><span>Cargando mapa…</span></div>
+        }
+        <div #mapCanvas class="map-canvas" aria-label="Mapa interactivo de Bogotá"></div>
+      </section>
+
+      <aside class="details-column">
+        @if (availableRoutes.length) {
+          <section class="card routes-card">
+            <div class="section-title">
+              <div><p class="eyebrow">ELIGE TU RECORRIDO</p><h2>{{ availableRoutes.length }} {{ availableRoutes.length === 1 ? 'ruta' : 'rutas' }} disponibles</h2></div>
+              <span class="route-icon">↗</span>
+            </div>
+            <p class="muted">Toca una opción para verla resaltada en el mapa.</p>
+            <div class="route-options">
+              @for (candidate of availableRoutes; track $index; let index = $index) {
+                <button
+                  class="route-option"
+                  [class.selected]="index === selectedRouteIndex"
+                  [attr.aria-pressed]="index === selectedRouteIndex"
+                  type="button"
+                  (click)="selectRoute(index)"
+                >
+                  <span class="route-choice-icon">{{ index === selectedRouteIndex ? '✓' : '↗' }}</span>
+                  <span class="route-choice-text">
+                    <strong>{{ routeName(index) }}{{ index === selectedRouteIndex ? ' · seleccionada' : '' }}</strong>
+                    <small>{{ formatDistance(candidate) }} · {{ routeMode }}</small>
+                  </span>
+                  <b class="route-time">{{ formatDuration(candidate) }}</b>
+                </button>
+              }
+            </div>
+          </section>
+        }
+
+        <section class="card weather-card">
+          <div class="section-title">
+            <div><p class="eyebrow">PRONÓSTICO</p><h2>Lluvia por tramos</h2></div>
+            <span class="rain-icon">☂</span>
+          </div>
+          <p class="muted">Probabilidad y milímetros estimados para las próximas 3 horas.</p>
+          @if (forecastCheckedAt) {
+            <p class="forecast-time" aria-live="polite">Consultado a las {{ forecastCheckedAt }}</p>
+          }
+          <div class="legend">
+            <span><i style="background:#25a875"></i>Baja</span>
+            <span><i style="background:#d8a51d"></i>Media</span>
+            <span><i style="background:#e87536"></i>Alta</span>
+            <span><i style="background:#c94352"></i>Muy alta</span>
+          </div>
+          @if (weatherResults.length) {
+            <div class="segments">
+              @for (segment of weatherResults; track segment.number) {
+                <article class="segment">
+                  <i class="segment-dot" [style.background]="riskColor(segment.probability)"></i>
+                  <div><strong>Tramo {{ segment.number }}{{ segment.raining ? ' · lluvia prevista' : '' }}</strong>
+                    <small>{{ segment.millimeters | number:'1.1-1' }} mm · {{ segment.point.lat | number:'1.3-3' }}, {{ segment.point.lng | number:'1.3-3' }}</small>
+                  </div>
+                  <b class="probability">{{ segment.probability }}%</b>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="empty-state">Calcula una ruta y toca “Analizar lluvia” para consultar varios puntos del trayecto.</p>
+          }
+        </section>
+
+        <section class="card reports-card">
+          <div class="section-title"><div><p class="eyebrow">COMUNIDAD</p><h2>Reportes cercanos</h2></div><span class="report-count">{{ reports.length }}</span></div>
+          <p class="muted">Los reportes se guardan en este dispositivo y vencen en 3 horas.</p>
+          @if (reports.length) {
+            <div class="reports-list">
+              @for (report of reports; track $index; let index = $index) {
+                <article class="report-row"><span><strong>{{ report.kind }}</strong><small>{{ report.time }} · {{ report.point.lat | number:'1.3-3' }}, {{ report.point.lng | number:'1.3-3' }}</small></span><button type="button" (click)="removeReport(index)" aria-label="Eliminar reporte">×</button></article>
+              }
+            </div>
+          } @else {
+            <p class="empty-state compact">Todavía no hay reportes. Usa “Reportar punto” para agregar uno.</p>
+          }
+        </section>
+
+        <p class="disclaimer">Las rutas para moto de Google están en versión beta: confirma siempre la señalización y los cierres viales. El pronóstico de lluvia usa Open-Meteo (datos CC BY 4.0); es una estimación, no radar en vivo ni medición de pluviómetro. Los reportes se guardan localmente en cada dispositivo; no se sincronizan entre equipos.</p>
+      </aside>
+    </div>
+  </main>
+</ion-content>
