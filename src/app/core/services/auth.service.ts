@@ -43,6 +43,13 @@ export class AuthService {
   private readonly _avisoSuspension = signal<string | null>(null);
   /** Carga de perfil en curso (para `esperarPerfil`). */
   private perfilEnCurso: Promise<void> = Promise.resolve();
+  /**
+   * true desde que Supabase canjea un enlace de "recuperar contrasena"
+   * (evento PASSWORD_RECOVERY) hasta que el usuario fija la nueva clave.
+   * Permite llevarlo a `/auth/restablecer` aunque el enlace aterrice en otra ruta.
+   */
+  private readonly _enRecuperacion = signal(false);
+  readonly enRecuperacion = this._enRecuperacion.asReadonly();
 
   /** true cuando hay un usuario autenticado. */
   readonly isAuthenticated = computed(() => this._session() !== null);
@@ -72,16 +79,13 @@ export class AuthService {
    * (ver el proveedor `APP_INITIALIZER` en app.config.ts).
    */
   async init(): Promise<void> {
-    // 1. Sesion ya persistida (usuario que vuelve a abrir la app).
-    const { data } = await this.supabase.client.auth.getSession();
-    this._session.set(data.session);
-    if (data.session) {
-      this.perfilEnCurso = this.cargarPerfil(data.session);
-      await this.perfilEnCurso;
-    }
-
-    // 2. Suscripcion a cambios (login, logout, refresh de token, OAuth...).
+    // 1. Suscripcion a cambios (login, logout, refresh de token, OAuth...).
+    //    Va ANTES de leer la sesion: si la URL trae un `?code=` de un enlace de
+    //    recuperacion, el SDK lo canjea al arrancar y emite PASSWORD_RECOVERY
+    //    una sola vez; suscribirse despues hacia que ese evento se perdiera.
     this.supabase.client.auth.onAuthStateChange((event: AuthChangeEvent, session) => {
+      if (event === 'PASSWORD_RECOVERY') this._enRecuperacion.set(true);
+      if (event === 'SIGNED_OUT') this._enRecuperacion.set(false);
       this._session.set(session);
       if (session) {
         this.perfilEnCurso = this.cargarPerfil(session);
@@ -89,6 +93,14 @@ export class AuthService {
         this._perfil.set(null);
       }
     });
+
+    // 2. Sesion ya persistida (usuario que vuelve a abrir la app).
+    const { data } = await this.supabase.client.auth.getSession();
+    this._session.set(data.session);
+    if (data.session) {
+      this.perfilEnCurso = this.cargarPerfil(data.session);
+      await this.perfilEnCurso;
+    }
 
     this._ready.set(true);
   }
@@ -248,6 +260,7 @@ export class AuthService {
   async actualizarPassword(nuevaPassword: string): Promise<void> {
     const { error } = await this.supabase.client.auth.updateUser({ password: nuevaPassword });
     if (error) throw error;
+    this._enRecuperacion.set(false);
   }
 
   /**

@@ -26,6 +26,19 @@ export function mensajeErrorAuth(error: unknown): string {
   if (raw.includes('should be different from the old password')) {
     return 'La nueva contrasena debe ser distinta a la anterior.';
   }
+  // Enlaces del correo (recuperar contrasena, confirmar cuenta) vencidos o ya usados.
+  if (
+    raw.includes('otp_expired') ||
+    raw.includes('has expired') ||
+    raw.includes('link is invalid') ||
+    raw.includes('already been used')
+  ) {
+    return 'El enlace vencio o ya fue usado. Pide uno nuevo.';
+  }
+  // PKCE: el enlace solo se puede canjear en el navegador que lo solicito.
+  if (raw.includes('code verifier') || raw.includes('flow_state') || raw.includes('flow state')) {
+    return 'Abre el enlace en el mismo navegador donde lo pediste, o pide uno nuevo.';
+  }
   if (raw.includes('auth session missing') || raw.includes('session_not_found')) {
     return 'Tu enlace de recuperacion vencio. Pide uno nuevo.';
   }
@@ -55,5 +68,8 @@ export function mensajeErrorAuth(error: unknown): string {
   if (raw.includes('popup') || raw.includes('cancelled') || raw.includes('canceled')) {
     return 'Inicio de sesion con Google cancelado.';
   }
+  // Error sin traduccion: se registra el original para poder diagnosticarlo
+  // (el usuario solo ve el mensaje generico).
+  console.error('[mensajeErrorAuth] error sin traduccion:', error);
   return 'Ocurrio un error inesperado. Intenta nuevamente.';
 }

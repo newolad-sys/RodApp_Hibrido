@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/cor
 import { Router } from '@angular/router';
 import { IonContent, IonSpinner } from '@ionic/angular/standalone';
 
+import { AuthService } from '@core/services/auth.service';
 import { NotificationService } from '@core/services/notification.service';
 import { SupabaseService } from '@core/services/supabase.service';
 import { mensajeErrorAuth } from '@shared/utils/auth-error.util';
@@ -51,6 +52,7 @@ import { mensajeErrorAuth } from '@shared/utils/auth-error.util';
 })
 export class CallbackPage implements OnInit {
   private readonly supabase = inject(SupabaseService);
+  private readonly auth = inject(AuthService);
   private readonly notify = inject(NotificationService);
   private readonly router = inject(Router);
 
@@ -58,20 +60,34 @@ export class CallbackPage implements OnInit {
     try {
       const url = new URL(window.location.href);
       const code = url.searchParams.get('code');
-      const errorParam = url.searchParams.get('error_description') ?? url.searchParams.get('error');
+      // Supabase devuelve los errores (p. ej. otp_expired) en la query o en el hash.
+      const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
+      const errorParam =
+        url.searchParams.get('error_description') ??
+        hash.get('error_description') ??
+        url.searchParams.get('error') ??
+        hash.get('error');
 
       if (errorParam) throw new Error(errorParam);
 
       if (code) {
         // Idempotente: si el SDK (detectSessionInUrl) ya canjeo el codigo, esto
-        // fallara silenciosamente y comprobamos la sesion abajo.
-        await this.supabase.client.auth.exchangeCodeForSession(code).catch(() => undefined);
+        // falla y comprobamos la sesion abajo.
+        const { error } = await this.supabase.client.auth.exchangeCodeForSession(code);
+        if (error) console.warn('[CallbackPage] exchangeCodeForSession:', error.message);
       }
 
       const { data } = await this.supabase.client.auth.getSession();
-      const destino = data.session ? '/app/inicio' : '/login';
+      // Un enlace de "recuperar contrasena" que aterriza aqui (en vez de en
+      // /auth/restablecer) se redirige a la pantalla de nueva contrasena.
+      const destino = !data.session
+        ? '/login'
+        : this.auth.enRecuperacion()
+          ? '/auth/restablecer'
+          : '/app/inicio';
       await this.router.navigateByUrl(destino, { replaceUrl: true });
     } catch (error) {
+      console.error('[CallbackPage]', error);
       await this.notify.error(mensajeErrorAuth(error));
       await this.router.navigateByUrl('/login', { replaceUrl: true });
     }

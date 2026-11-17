@@ -1,321 +1,213 @@
 # RodApp Híbrido — Avances
 
 Documento de continuidad. Resume **todo** lo hecho para poder retomar tras
-reiniciar el equipo.
+reiniciar el equipo o cambiar de máquina.
 
 - **Ubicación:** `C:\Users\EQUIPO\Documents\Ucompensar\7mo Semestre\Desarrollo apps hibridas\RodApp_Hibrido`
 - **Stack:** Ionic 8 (standalone) + Angular 18 (standalone, sin NgModules) + Capacitor 6 + Supabase (backend único). Estado con signals.
-- **Última actualización:** 2026-10-11
+- **Repositorio:** `https://github.com/newolad-sys/RodApp_Hibrido` — rama de trabajo **`Oscar`**.
+- **Última actualización:** 2026-11-16
 
 ---
 
-## 0. Backend Supabase — repuntado al proyecto nuevo (actualizado 2026-11-10)
+## 0. Resumen de la jornada 2026-11-16
 
-**Estado al 2026-11-10 (rama `Diego`):** el bloqueador está prácticamente
-resuelto.
-
-- ✅ Los dos `environment*.ts` ya apuntan a `smkhwldylnztluitsciz` (lo hizo
-  Diego) y el ref viejo se reemplazó en `package.json` (`db:link`),
-  `supabase/README.md`, `CONTRIBUTING.md` y `README.md`.
-- ✅ `/auth/v1/health` responde `200` con la clave publicable.
-- ✅ Las 9 tablas del esquema existen en el proyecto nuevo, y también las
-  columnas de las migraciones 2 y 3 (`costo`, `lugar`, `motos.updated_at`).
-  Comprobado vía REST con la clave publicable. Falta confirmar con
-  `npm run db:link` + `npx supabase migration list` que el historial de
-  migraciones del proyecto coincide con `supabase/migrations/`.
-- ✅ `redirectWeb` de desarrollo restaurado a `http://localhost:8100/auth/callback`
-  (había quedado con el placeholder de producción).
-- ⏳ Registrar las *Redirect URLs* en el proyecto nuevo (Authentication > URL
-  Configuration) y repetir la prueba de navegador de §3.
-
-Lo que sigue es el registro histórico del problema (2026-10-11).
-
-Al probar el registro en el navegador (la prueba que venía pendiente desde el
-2026-09-13) la app devolvió **"Sin conexión con el servidor. Verifica tu
-internet."** — captura local en `Imagenes/Registro.png` (no versionada, ver §1).
-
-No es un bug de la app ni de la conexión del equipo: el proyecto Supabase al
-que apuntan `src/environments/environment.ts` y `environment.prod.ts` ya no
-existe. Comprobado el 2026-10-11 contra `/auth/v1/health`:
-
-| Proyecto | Respuesta |
+| Tema | Resultado |
 |---|---|
-| `erttcudseqjrpyathmal` — el que usa el código | ninguna; el dominio ni siquiera resuelve |
-| `smkhwldylnztluitsciz` — el que aparece en `.mcp.json` (sin commitear) | `401`, es decir vivo: solo pide `apikey` |
-
-Hay entonces un proyecto Supabase nuevo configurado para el MCP, pero **el
-código sigue apuntando al viejo** (falta confirmar si el nuevo es su
-reemplazo). Mientras eso no se corrija no funciona nada que toque la base de
-datos: ni registro, ni login, ni los 4 formularios, ni el alta de moto.
-
-### Para desbloquear
-1. Confirmar qué proyecto Supabase se usa de ahora en adelante.
-2. Poner su `url` + `anon key` en `src/environments/environment.ts` y en
-   `src/environments/environment.prod.ts`.
-3. Actualizar el ref viejo en los otros archivos donde quedó escrito:
-   `package.json` (script `db:link`), `supabase/README.md` y `CONTRIBUTING.md`.
-4. Aplicar las **3 migraciones** al proyecto nuevo: `npm run db:login` →
-   `npm run db:link` → `npm run db:push`. Sin esto las tablas no existen allí
-   y los formularios fallarán aunque la conexión ya funcione.
-5. Volver a registrar las *Redirect URLs* (`http://localhost:8100/auth/callback`
-   y `com.rodapp.hibrido://auth/callback`) en Authentication > URL Configuration.
-6. Solo entonces repetir la prueba de navegador descrita en §3.
-
-> **Para la próxima vez:** si vuelves a ver *"Sin conexión con el servidor"*,
-> revisa primero que el proyecto Supabase siga vivo
-> (`curl -i https://<ref>.supabase.co/auth/v1/health`) antes de buscar el error
-> en el código — el mensaje es genérico y apunta al lugar equivocado.
+| Cambio de repositorio | ✅ Migrado a `newolad-sys/RodApp_Hibrido` con las 4 ramas |
+| Integración de ramas | ✅ `Oscar` = Diego (`d6962e8`) + Cristian (`384d336`) + RUNT + mockups |
+| Build de producción | ✅ `npm run build` sin errores (arreglado BigInt de `maplibre-gl` 6) |
+| Supabase | ✅ 9 migraciones aplicadas, Edge Function `consulta-runt` desplegada |
+| Consulta RUNT (PlacApi) | ✅ Probada en modo `mock` y en `live` con una moto real |
+| Eliminar moto | ✅ Botón nuevo en el detalle de la moto + placa única **por usuario** |
+| Login con Google | ✅ Funcionando en web (probado con dos cuentas) |
+| Consejos | ✅ Funciona (el fallo era el servidor de desarrollo caído) |
+| Recuperar contraseña | ⏳ Sin cerrar: aparece *"Ocurrió un error inesperado"* (ver §3) |
 
 ---
 
 ## 1. Estado de Git
 
-- Repo en GitHub: `https://github.com/newolad/RodApp_Hibrido.git`.
-- **Rama de trabajo actual: `Diego`** (desde 2026-11-10): parte de `Oscar` y
-  agrega el mapa con MapLibre, las vistas alineadas con Figma y el cambio al
-  proyecto Supabase nuevo. `Oscar` queda como rama anterior.
-- `main` solo tiene el commit inicial del scaffold; el desarrollo real vive en `Oscar`.
-- Flujo de ramas y cómo abrir un PR: ver [`CONTRIBUTING.md`](CONTRIBUTING.md).
-- ⚠️ **El historial se reescribió el 2026-10-11.** Se limpiaron los mensajes
-  de los 16 commits (13 en `Oscar`, 3 en `main`) con `git filter-branch` para
-  quitarles una línea de atribución de herramienta, y se hizo **force-push a
-  las dos ramas**. Ningún archivo cambió de contenido, solo los mensajes, pero
-  **todos los SHAs son nuevos**. Si tienes un clon anterior **no hagas
-  `git pull`** (te mezclaría los dos historiales): usa
-  `git fetch && git reset --hard origin/<rama>` o vuelve a clonar.
-- **Queda fuera de los commits, a propósito:** `Imagenes/` (capturas de
-  depuración personales, igual que `Correcciones/`) y `.mcp.json`
-  (configuración local del MCP de Supabase — ver §3). El cambio que la CLI de
-  Angular había hecho sola en `angular.json` (un id de telemetría de esta
-  máquina) se descartó.
+- **Repo actual:** `https://github.com/newolad-sys/RodApp_Hibrido` (remoto
+  `origin`). Ramas: `main`, `Oscar`, `Diego`, `Cristian`.
+- **Repo original:** `https://github.com/newolad/RodApp_Hibrido`, configurado
+  como remoto **`original`** (solo lectura). Se dejó de usar el 2026-11-16 por
+  el cambio de equipo: la cuenta guardada en Windows (`newolad-sys`) no tiene
+  permiso de escritura allí (error 403).
+- **Rama de trabajo: `Oscar`.** Contiene todo:
+  - `c8a7f12` merge de `Diego` local (mapa MapLibre, vistas Figma, repunte a
+    Supabase nuevo, RUNT).
+  - `a129008` merge de `original/Diego` (`d6962e8`: datos reales, recordatorios
+    locales, tema claro/oscuro, reset de contraseña, panel admin).
+  - `ac60ec8` eliminar moto + placa única por usuario + ignora credenciales de Google.
+  - `d285af3` merge de `Cristian` (nombre del registro al perfil, rediseño de
+    campos del formulario de moto, página de documentos, README de la
+    entrega con capturas, carpeta `android/`).
+- `Diego` también tiene `d6962e8` y los commits del RUNT. `Cristian` quedó
+  copiada tal cual desde el repo original.
+- ⚠️ **El historial se reescribió el 2026-10-11** (`git filter-branch` + force
+  push). No citar SHAs anteriores a esa fecha.
+- **Fuera de los commits, a propósito:**
+  - `.mcp.json`: configuración local del MCP de Supabase. **Decisión: no se sube.**
+  - `client_secret_*.json`: credenciales descargadas de Google Cloud. Están en
+    `.gitignore` y **nunca deben quedar dentro del proyecto**.
+  - `Imagenes/`: capturas personales de depuración.
 
 ---
 
 ## 2. Lo que está HECHO
 
-### 2.1 Base del proyecto (build verificado)
-- Scaffold completo: `package.json`, `angular.json` (salida a `www`), `tsconfig*`
-  (con `baseUrl`), `ionic.config.json`, `capacitor.config.ts`, `.gitignore`,
+### 2.1 Base del proyecto
+- Scaffold completo: `package.json`, `angular.json` (salida a `www`),
+  `tsconfig*`, `ionic.config.json`, `capacitor.config.ts`, `.gitignore`,
   `.editorconfig`, `.nvmrc` (Node 20), `.browserslistrc`, `.env.example`.
-- `npm install` ejecutado (1040 paquetes). `node_modules/` presente pero ignorado.
-- **`ng build` (dev y prod) verificados sin errores.** Arranque: `npm start`
-  → `http://localhost:8100`.
-- Tema global oscuro desde tokens de Figma (`src/theme/variables.scss`) +
-  utilidades compartidas (`src/global.scss`). Íconos centralizados
-  (`src/app/shared/ui/app-icons.ts`).
-- PWA: `manifest.webmanifest`, meta tags, `src/assets/icon/logo.svg`.
+- **`npm run build` verificado el 2026-11-16.** Solo quedan dos avisos de
+  presupuesto de SCSS (`map.page.scss` 9 kB y `admin-users.page.scss` 7 kB,
+  aviso desde 6 kB, error desde 12 kB). No bloquean.
+- **`.browserslistrc` subido a Chrome/Android ≥ 67, Firefox ≥ 68, Safari/iOS ≥ 14.**
+  `maplibre-gl` 6 usa literales BigInt (`0n`) y con los mínimos anteriores
+  (Chrome 61, iOS 13) el build de producción fallaba. `ng serve` no lo detecta.
+- Dependencias nativas nuevas: `@capacitor/local-notifications` (Diego) y
+  `@capacitor/geolocation` (Cristian). Tras traer cambios ajenos, correr
+  `npm install` antes del build.
+- Arranque: `npm start` → `http://localhost:8100`. **Dejar esa terminal solo
+  para la app**: si se detiene, las pantallas no visitadas fallan con
+  `ChunkLoadError` (así se vio "Consejos" sin funcionar).
 
-### 2.2 Autenticación con Supabase — completa (código)
-| Función | Archivo |
+### 2.2 Backend Supabase — proyecto `smkhwldylnztluitsciz`
+- Proyecto vinculado con la CLI (`supabase/.temp/project-ref`). La CLI está
+  fijada en `2.117.0` en `package.json`; **no actualizar a la v3** sin probar.
+- **9 migraciones aplicadas** (`npx supabase migration list`):
+
+| Migración | Qué hace |
 |---|---|
-| Cliente único, PKCE, storage por plataforma (Preferences nativo / localStorage web), `detectSessionInUrl` solo web | `src/app/core/services/supabase.service.ts` |
-| Estado de sesión (signals), `init()`, registro, login, Google (web + nativo), `completeOAuthFromUrl`, `logout`, carga/creación de perfil | `src/app/core/services/auth.service.ts` |
-| Adaptador de almacenamiento | `src/app/core/storage/capacitor-storage.adapter.ts` |
-| Guards `authGuard` / `guestGuard` | `src/app/core/guards/` |
-| Deep link OAuth nativo (`com.rodapp.hibrido://auth/callback`) | `src/app/app.component.ts` |
-| `APP_INITIALIZER` resuelve la sesión antes de pintar UI | `src/app/app.config.ts` |
-| Toasts/alertas/loading centralizados | `src/app/core/services/notification.service.ts` |
-| Validadores + mapeo de errores de Supabase a español | `src/app/shared/utils/` |
+| `20260911000000_esquema_inicial` | 9 tablas, RLS y trigger de perfil |
+| `20260912000000_ajustes_formularios` | `costo` en mantenimiento, `lugar` en combustible |
+| `20260913000000_formaliza_ajustes_manuales` | `motos.updated_at` |
+| `20261110000000_consultas_runt` | Caché y tope diario de consultas al RUNT |
+| `20261112000000_protege_rol_usuarios` | Un usuario no puede cambiarse el rol |
+| `20261112000100_panel_admin` | `es_admin()`, suspensión de cuentas, RPC de admin |
+| `20261113000000_consejos_iniciales` | Contenido inicial de Consejos |
+| `20261115000000_nombre_desde_metadata` | El perfil toma nombre/apellido del registro o de Google |
+| `20261116000000_placa_unica_por_usuario` | `unique (user_id, placa)` en lugar de `unique (placa)` |
 
-### 2.3 Vistas en código
-Esta seccion quedo desactualizada frente al inventario real; el detalle
-completo y al dia (23 de ~50 vistas abordadas) esta en `mockups/VISTAS.md`.
-Resumen de lo mas relevante:
+- `20261115…` es de Cristian y ya estaba aplicada en el servidor. Si una
+  migración tiene fecha anterior a la última aplicada, `db push` la rechaza:
+  usar `npx supabase db push --include-all`.
+- **Authentication > URL Configuration:** Site URL `http://localhost:8100` y
+  Redirect URLs `http://localhost:8100/auth/callback`,
+  `http://localhost:8100/auth/restablecer`, `com.rodapp.hibrido://auth/callback`
+  y `com.rodapp.hibrido://auth/restablecer`.
+- La tabla `consejos` devuelve 0 filas con la clave pública sin sesión: es su
+  RLS (solo usuarios autenticados), no falta de datos.
 
-| Vista | Ruta | Estado |
-|---|---|---|
-| Login | `/login` | ✅ completa (form reactivo + Google) |
-| Registro | `/registro` | ✅ completa (form reactivo + confirmación de contraseña + Google) |
-| Callback OAuth | `/auth/callback` | ✅ (puente web) |
-| Shell de 5 tabs | `/app` | ✅ (Inicio·Garaje·Mapa·Historial·Perfil) |
-| Inicio | `/app/inicio` | 🟨 saludo real + estado vacío (falta estado "con datos") |
-| Garaje | `/app/garaje` | 🟨 lista motos reales de Supabase (`MotosService`) o CTA "Registrar moto" |
-| Registrar moto | `/app/garaje/nueva` | 🟨 funcional, conectada a `motos` (prerequisito de los formularios de abajo) |
-| Combustible / Mantenimiento / SOAT / RTM (alta) | `/app/combustible/nuevo`, `/app/mantenimiento/nuevo`, `/app/garaje/soat/nuevo`, `/app/garaje/rtm/nuevo` | 🟨 **ya persisten en Supabase**; falta pixel-perfect contra Figma |
-| Mapa | `/app/mapa` | 🟨 placeholder |
-| Historial | `/app/historial` | 🟨 placeholder |
-| Perfil | `/app/perfil` | ✅ tarjeta de identidad + **Editar datos** + **Ajustes** + cerrar sesión |
-| Editar datos personales | `/app/perfil/editar` | ✅ nombre/apellido, persiste en `users` |
+### 2.3 Consulta RUNT (PlacApi)
+- Edge Function `supabase/functions/consulta-runt` **desplegada**. La API key
+  de PlacApi va solo como secreto de la función, nunca en el código.
+- Secretos: `PLACAPI_MODE` (`mock` | `live`), `PLACAPI_KEY` (`pk_live_…`),
+  `PLACAPI_LIMITE_DIARIO` (por defecto 3 por usuario/día), `PLACAPI_BASE_URL`.
+- **Probado:** en `mock` (datos ficticios) y en `live` con la placa real del
+  usuario: autocompleta marca/modelo/cilindrada y guarda SOAT y RTM con la moto.
+- **Créditos:** se usó el crédito gratis del registro. Cada consulta con datos
+  cuesta 1 crédito; compra mínima 30 créditos = $10.470 COP (ePayco: tarjeta,
+  Nequi o Daviplata). Saldo sin costo: `GET https://placapi.com/api/me` con el
+  encabezado `x-api-key`.
+- Sin créditos, el modo `live` responde *"La consulta al RUNT no está
+  disponible"*. Para desarrollar: `npx supabase secrets set PLACAPI_MODE=mock`.
+- Caché de 24 h por usuario y placa en `consultas_runt` (no se borra al
+  eliminar la moto, así que repetir la consulta no gasta crédito).
 
-Placeholders comparten `SectionPlaceholderComponent` (coherencia visual).
-
-### 2.4 Backend (carpeta `supabase/`)
-- `config.toml` (Auth, redirects web + deep link, provider Google), `functions/`,
-  `seed.sql`, `README.md`.
-- **Migración inicial creada y ya aplicada** al proyecto en la nube
-  (`migrations/20260911000000_esquema_inicial.sql`): 9 tablas (`users`, `motos`,
-  `soat`, `rtm`, `documentos`, `registros_combustible`,
-  `registros_mantenimiento`, `notificaciones`, `consejos`), RLS en todas y
-  trigger `on_auth_user_created` para el perfil.
-- **CLI de Supabase integrada** como `devDependency` (`npx supabase`, scripts
-  `db:login`/`db:link`/`db:push`/`db:diff`/`db:start`/`db:stop` en
-  `package.json`). Login no interactivo con `--token` (el navegador no
-  funciona en este entorno sin TTY). Docker **no instalado** (no hace falta
-  para link/push, solo para `supabase start`; ver `supabase/README.md`).
-
-### 2.5 Figma — mockups
-- **Archivo nuevo creado:** `RodApp Híbrido — Mockups`
-  → https://www.figma.com/design/qJRAjknoNxqzfxprOmTeJI
-- 7 frames fieles al código: Login, Crear cuenta, Inicio, Garaje, Mapa,
-  Historial, Perfil (tema oscuro, tipografía Inter, íconos coherentes).
-- **Prototipo navegable cableado:** Login↔Registro, Login→Inicio, Registro→Inicio,
-  barra de tabs interconectada en las 5 pantallas, Perfil→Login (logout).
-  Punto de inicio del flujo en Login.
-- Board "Vistas — informe" con las 7 vistas organizadas + título.
-
-### 2.6 Carpeta `mockups/` (en este proyecto)
-| Ruta | Contenido |
+### 2.4 Autenticación
+| Función | Estado |
 |---|---|
-| `mockups/VISTAS.md` | **Inventario completo** de ~50 vistas en 12 secciones, con estado (✅/🟨/⬜), ruta Ionic propuesta y fuente (archivo Android/web). Reconstruido de `rodApp-santiago` + frontend web + AVANCES; **pendiente validar contra el Figma original**. |
-| `mockups/informe/rodapp-vistas-general.png` | Imagen 2216×2534 con las 7 vistas organizadas (para el informe). |
-| `mockups/manual/` | **Vacía.** Los 7 PNG por vista quedaron pendientes (ver §3). |
+| Registro / login con correo | ✅ |
+| Login con **Google** (web) | ✅ Cliente OAuth "Aplicación web" en Google Cloud (proyecto `RodApp`), app en modo **Prueba**: solo entran los correos agregados como *usuarios de prueba* |
+| Nombre del registro al perfil | ✅ (migración de Cristian) |
+| Recuperar contraseña (`/recuperar` → correo → `/auth/restablecer`) | ⏳ Ver §3 |
+| Cuentas suspendidas por un admin | ✅ (panel admin de Diego) |
+| Login con Google en Android | ⏳ El deep link `com.rodapp.hibrido://auth` ya está en `AndroidManifest.xml`; falta probar en dispositivo |
+
+Configuración de Google Cloud: origen autorizado `http://localhost:8100` y URI
+de redirección `https://smkhwldylnztluitsciz.supabase.co/auth/v1/callback`.
+
+### 2.5 Garaje y motos
+- Registrar moto con autocompletado del RUNT y diseño de campos de Cristian
+  (etiqueta arriba + caja con borde). Orden: Placa → tarjeta RUNT → resto.
+- **Eliminar moto** (nuevo): botón rojo al final de `/app/garaje/detalle/:id`,
+  con confirmación. La base borra en cascada SOAT, RTM, documentos, tanqueadas
+  y mantenimientos; la app recarga el garaje y reprograma los recordatorios.
+  `MotosService.eliminar()` detecta cuando RLS bloquea el borrado (Supabase no
+  da error, devuelve 0 filas).
+- La placa es única **por usuario**: el mismo usuario no puede repetirla, pero
+  otra cuenta sí puede registrarla (caso de venta de la moto).
+
+### 2.6 Figma y mockups
+- Archivo `RodApp Híbrido — Mockups`:
+  https://www.figma.com/design/qJRAjknoNxqzfxprOmTeJI (7 frames + prototipo).
+- `mockups/`: `VISTAS.md` (inventario de ~50 vistas), exportaciones PDF/PNG de
+  Figma por flujo (inicio de sesión, registro de moto y documentos, combustible
+  y tareas) e `informe/`.
+- `docs/capturas/`: capturas web y Android usadas en el README de la entrega.
 
 ---
 
 ## 3. Lo que está PENDIENTE
 
-### Bloqueado / requiere acción del usuario
-1. **7 PNG individuales por vista** para el manual (`mockups/manual/`): se cortó
-   por el **límite de llamadas MCP del plan Starter de Figma**. Opciones:
-   reintentar cuando se reinicie el límite, exportarlos a mano desde Figma
-   (seleccionar frames → panel Export → PNG 2x), o recortarlos del PNG general.
-2. **Probar en navegador los últimos cambios** (registro de moto, formularios,
-   edición de perfil): se intentó el 2026-10-10 y **no se llegó a probar nada**
-   — el backend no responde (§0). La prueba sigue pendiente, pero ahora la
-   bloquea §0, no la RAM del equipo. Cuando se desbloquee, el recorrido es:
-   Garaje → Registrar moto → los 4 formularios → Perfil → Editar datos /
-   Ajustes.
-3. **Login con Google**: configuración externa pendiente (ver §3 "Backend
-   Supabase" más abajo).
+### 3.1 Abierto
+1. **Recuperar contraseña: probar de punta a punta tras el arreglo.** El
+   2026-11-16 el enlace del correo terminó en `/auth/callback` y de ahí en
+   `/login` con *"Ocurrió un error inesperado"*. Arreglos aplicados:
+   - `AuthService.init()` se suscribe a `onAuthStateChange` **antes** de leer
+     la sesión, para no perder el evento `PASSWORD_RECOVERY` que el SDK emite
+     al canjear el `?code=` en el arranque. Nueva señal `enRecuperacion`.
+   - `/auth/callback` lee errores también del *hash*, registra el error en la
+     consola y, si es una recuperación, lleva a `/auth/restablecer`.
+   - `mensajeErrorAuth` traduce enlace vencido o usado y "abre el enlace en el
+     mismo navegador" (PKCE), y registra en la consola los errores sin traducción.
+   Si vuelve a fallar: copiar el error de la consola (F12) y *Supabase > Logs > Auth*.
+2. **PlacApi:** decidir si se compran créditos o se deja `PLACAPI_MODE=mock`.
 
-### Consulta RUNT (PlacApi) — código listo, falta desplegar (2026-11-11)
-- ✅ Edge Function `supabase/functions/consulta-runt` (llama a `POST
-  /api/consulta` de PlacApi; cache 24 h + tope diario por usuario), migración
-  `20261110000000_consultas_runt.sql`, `RuntService` y botón "Consultar RUNT"
-  en *Registrar moto* (autocompleta marca/modelo/cilindrada y guarda SOAT/RTM).
-- Arranca en **modo `mock`** (datos ficticios, 0 créditos). Detalle y secretos
-  en `supabase/README.md` § "Consulta RUNT".
-- ⏳ Pendiente: `npm run db:push`, `npx supabase functions deploy
-  consulta-runt`, probar en mock y, cuando se quiera datos reales, crear la
-  API key en placapi.com y `supabase secrets set PLACAPI_MODE=live
-  PLACAPI_KEY=...`.
-- Sin verificar: PlacApi documenta un sandbox (`sandbox.placapi.com`) pero no
-  publica su host de API ni las placas de prueba; por eso existe el modo mock.
-
-### Backend Supabase
-- 🔴 **El proyecto `erttcudseqjrpyathmal` dejó de responder (§0).** Todo lo que
-  sigue se escribió cuando ese proyecto estaba vivo: las migraciones están
-  aplicadas *allí*, no en el proyecto nuevo. Antes de seguir hay que repuntar
-  el código y volver a aplicarlas.
-- ✅ Migración inicial escrita y **aplicada** (§2.4), más dos migraciones de
-  ajuste: `20260912000000_ajustes_formularios.sql` (`costo` en
-  `registros_mantenimiento`, `lugar` en `registros_combustible`) y
-  `20260913000000_formaliza_ajustes_manuales.sql` (formaliza `updated_at` y
-  la placa unica en `motos` que se habian agregado a mano desde el panel).
-- ✅ Los 4 formularios (combustible, mantenimiento, SOAT, RTM) y el alta de
-  moto ya persisten en Supabase real (`MotosService` + `SupabaseService`).
-- Pendiente: los scaffolds de detalle/notificaciones/consejos siguen con
-  datos de ejemplo (no leen de sus tablas todavía).
-- Poner URL + `anon key` reales en `src/environments/environment*.ts`
-  (ahora usan las del proyecto Supabase del RodApp original).
-- **Pendiente (acción del usuario, fuera de este repo):** habilitar el login
-  con Google. Requiere:
-  1. Crear credenciales OAuth en Google Cloud Console (tipo "Aplicacion web",
-     redirect URI `https://<ref-del-proyecto>.supabase.co/auth/v1/callback`,
-     con el ref del proyecto que quede activo tras resolver §0).
-  2. Pegar el Client ID y Client Secret en el Dashboard de Supabase >
-     Authentication > Providers > Google (habilitar el toggle).
-  3. Registrar en Authentication > URL Configuration > Redirect URLs:
-     `http://localhost:8100/auth/callback` y `com.rodapp.hibrido://auth/callback`.
-  El codigo (`AuthService.loginWithGoogle`) ya esta listo; esto es
-  configuracion externa que Claude no puede hacer sin las credenciales de
-  Google Cloud del usuario.
-
-### MCP de Supabase (integración a medias)
-El `.mcp.json` de la raíz configura el servidor MCP de Supabase para poder
-consultar la base directamente desde el asistente. **Todavía no funciona.**
-Estado al 2026-10-12:
-
-- Apunta a `smkhwldylnztluitsciz`, el proyecto que sí responde (§0).
-- `claude mcp list` lo reporta como `⏸ Pending approval`: un `.mcp.json` es de
-  ámbito proyecto y hay que aprobarlo una vez (basta lanzar `claude` dentro de
-  la carpeta y aceptar).
-- El login OAuth falla con
-  `{"message":"resource: Resource must be a valid MCP endpoint"}`. **No es un
-  error de configuración nuestro:** es un bug conocido — cuando la URL lleva
-  query string (`?project_ref=...&features=...`), el `resource` que manda el
-  cliente deja de coincidir con el endpoint registrado. Hay además reportes de
-  que falla en la extensión de VSCode y sí funciona desde la terminal.
-
-**Camino recomendado para cerrarlo** (evita OAuth por completo y conserva el
-scope de proyecto y el modo solo-lectura):
-
-1. Aprobar el servidor: `claude` en la carpeta del proyecto → aceptar.
-2. Crear un Personal Access Token en Supabase (Account > Access Tokens).
-3. Guardarlo en el entorno, **nunca dentro del archivo**:
-   `setx SUPABASE_ACCESS_TOKEN "sbp_..."`, y reabrir terminal y VSCode.
-4. Reemplazar el `.mcp.json` por la versión de abajo.
-5. Verificar con `claude mcp list`: debe decir `✔ Connected`.
-
-```json
-{
-  "mcpServers": {
-    "supabase": {
-      "type": "http",
-      "url": "https://mcp.supabase.com/mcp?project_ref=smkhwldylnztluitsciz&read_only=true",
-      "headers": { "Authorization": "Bearer ${SUPABASE_ACCESS_TOKEN}" }
-    }
-  }
-}
-```
-
-Con esa forma — `${SUPABASE_ACCESS_TOKEN}` como referencia, no el token
-literal — el `.mcp.json` sí se puede commitear sin filtrar credenciales.
-
-**Para qué lo queremos:** resolver las dos incógnitas que bloquean §0 — si el
-proyecto nuevo ya tiene las 9 tablas o está vacío, y obtener su `anon key`
-para repuntar los `environment*.ts`.
-
-### Configuración nativa (cuando se compile a móvil)
-- `npx cap add android` / `npx cap add ios`.
-- Declarar el esquema `com.rodapp.hibrido://` en `AndroidManifest.xml` e
-  `Info.plist` (snippets en `README.md`).
-
-### Vistas por construir (~33)
-Ver `mockups/VISTAS.md` para el detalle. Resumen por sección:
-Onboarding/acceso (7 faltan) · Inicio con datos + gráficos (2) · Garaje: lista,
-registrar/editar/detalle de moto, documentos (5) · Documentos legales: SOAT, RTM,
-nuevo, detalle, adicionales, personalizado (6) · Registros: combustible,
-mantenimiento, selector, progreso (4) · Historial: con datos + filtros (2) ·
-Mapa: búsqueda, ruta, detalle de lugar (3) · Notificaciones (2) · Consejos (2) ·
-Perfil: editar, ajustes, seguridad, acerca de (4) · Admin de usuarios (2).
+### 3.2 Para más adelante
+- **Android:** la carpeta `android/` ya existe (Cristian). Falta probar en
+  dispositivo el login con Google y el enlace de recuperar contraseña.
+- **iOS:** no generado (`npx cap add ios`, requiere macOS).
+- **Producción web:** al publicar, agregar su URL en Supabase (Site URL y
+  Redirect URLs) y en Google Cloud; activar la confirmación de correo y
+  publicar la app de Google (salir del modo Prueba).
+- **MCP de Supabase:** `.mcp.json` se queda local. El intento de 2026-10-12
+  falló por un bug de OAuth con query string en la URL; la alternativa es un
+  Personal Access Token en una variable de entorno (`SUPABASE_ACCESS_TOKEN`)
+  referenciada desde el archivo.
+- **Vistas por construir:** ver `mockups/VISTAS.md`.
 
 ---
 
-## 4. Cómo retomar tras reiniciar
+## 4. Cómo retomar
 
-1. Abrir el proyecto en VS Code:
-   `code "C:\Users\EQUIPO\Documents\Ucompensar\7mo Semestre\Desarrollo apps hibridas\RodApp_Hibrido"`
-2. Verificar rama: `git branch` → debe estar en **`Oscar`**.
-3. (Si no se corrió el push) ejecutar los comandos de §1.
-4. `npm start` para levantar la app en web.
-5. **Antes que nada, resolver §0** (el backend no responde); sin eso la app
-   arranca pero ninguna pantalla con datos sirve. El MCP de Supabase (§3)
-   ayuda a resolverlo, pero no es imprescindible: `npm run db:push` y el
-   dashboard hacen lo mismo a mano.
-6. Después, continuar por: vistas de lectura con datos reales (`moto-detail`,
-   `documentos/detalle`, Inicio e Historial "con datos", notificaciones y
-   consejos) siguiendo `mockups/VISTAS.md`.
+1. Abrir el proyecto en VS Code y verificar la rama: `git branch` → **`Oscar`**.
+2. Traer cambios: `git pull`. Si alguien trabajó en otra rama:
+   `git fetch origin` y `git merge origin/<rama>`.
+3. `npm install` (por si llegaron dependencias nuevas).
+4. `npm start` en una terminal dedicada → `http://localhost:8100`.
+5. Si cambió algo en `supabase/migrations/`: `npx supabase db push --dry-run`
+   y luego `npm run db:push` (o `--include-all` si la CLI lo pide).
+6. Si la app dice *"Sin conexión con el servidor"*, revisar primero que el
+   proyecto siga vivo:
+   `curl -i https://smkhwldylnztluitsciz.supabase.co/auth/v1/health`.
 
 ## 5. Estructura del código
 
 ```
 src/app/
-├── core/            # servicios singleton (supabase, auth, notification), storage, guards, models
-├── shared/          # section-placeholder, app-icons, utils (validators, auth-error)
+├── core/            # servicios singleton (supabase, auth, motos, garaje-datos, runt,
+│                    # recordatorios, notification, theme, admin), guards, models
+├── shared/          # app-icons, utils (validators, auth-error, garaje)
 └── features/
-    ├── auth/        # login · register · callback
-    └── shell/       # tabs + inicio · garaje · mapa · historial · perfil
-supabase/            # config del backend (sin esquema)
-mockups/             # VISTAS.md + imágenes para informe/manual
+    ├── auth/        # login · register · callback · sso · forgot/reset password
+    ├── admin/       # panel de usuarios
+    └── shell/       # tabs + inicio · garaje · mapa · historial · perfil y formularios
+supabase/            # config.toml, migrations/, functions/consulta-runt
+android/             # proyecto nativo Capacitor (Cristian)
+mockups/             # VISTAS.md + exportaciones de Figma
+docs/capturas/       # capturas para el README de la entrega
 ```
