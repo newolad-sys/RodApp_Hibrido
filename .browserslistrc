@@ -1,4 +1,5 @@
 # Navegadores objetivo para la build web + WebView de Capacitor.
+# Minimos con soporte de BigInt: los exige maplibre-gl v6 (mapa).
 # https://github.com/browserslist/browserslist
 last 2 Chrome versions
 last 2 Firefox versions
