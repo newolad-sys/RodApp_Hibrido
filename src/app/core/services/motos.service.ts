@@ -84,4 +84,16 @@ export class MotosService {
     this._motos.update((motos) => [creada, ...motos]);
     return creada;
   }
+
+  /**
+   * Elimina una moto del usuario (y en cascada sus documentos y registros)
+   * y la quita de la lista local.
+   */
+  async eliminar(motoId: string): Promise<void> {
+    const { data, error } = await this.supabase.eliminarMoto(motoId);
+    if (error) throw error;
+    if (!data?.length) throw new Error('La moto no existe o no pertenece a tu cuenta.');
+
+    this._motos.update((motos) => motos.filter((m) => m.id !== motoId));
+  }
 }

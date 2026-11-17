@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import {
   IonHeader,
   IonToolbar,
@@ -16,6 +16,8 @@ import {
 } from '@ionic/angular/standalone';
 
 import { GarajeDatosService } from '@core/services/garaje-datos.service';
+import { MotosService } from '@core/services/motos.service';
+import { NotificationService } from '@core/services/notification.service';
 import {
   documentoVigente,
   estadoVencimiento,
@@ -178,6 +180,23 @@ import {
               </div>
             }
           </section>
+
+          <!-- Zona de peligro -->
+          <ion-button
+            class="eliminar"
+            color="danger"
+            fill="clear"
+            expand="block"
+            [disabled]="eliminando()"
+            (click)="eliminar()"
+          >
+            @if (eliminando()) {
+              <ion-spinner name="crescent"></ion-spinner>
+            } @else {
+              <ion-icon slot="start" name="trash-outline" aria-hidden="true"></ion-icon>
+              Eliminar moto
+            }
+          </ion-button>
         }
       </div>
     </ion-content>
@@ -251,11 +270,19 @@ import {
       .aviso-error {
         margin-top: 12px;
       }
+      .eliminar {
+        margin-top: 32px;
+      }
     `,
   ],
 })
 export class MotoDetailPage implements ViewWillEnter {
   readonly datos = inject(GarajeDatosService);
+  private readonly motos = inject(MotosService);
+  private readonly notify = inject(NotificationService);
+  private readonly router = inject(Router);
+
+  readonly eliminando = signal(false);
 
   /** `:id` de la ruta (enlazado por `withComponentInputBinding`). */
   readonly id = input.required<string>();
@@ -317,5 +344,32 @@ export class MotoDetailPage implements ViewWillEnter {
   async refrescar(event: CustomEvent): Promise<void> {
     await this.datos.cargar(true);
     (event.target as HTMLIonRefresherElement).complete();
+  }
+
+  async eliminar(): Promise<void> {
+    const m = this.moto();
+    if (!m?.id) return;
+    const ok = await this.notify.confirm(
+      'Eliminar moto',
+      `Se borrará la moto ${m.placa} junto con su SOAT, RTM, documentos y todos sus ` +
+        'registros de combustible y mantenimiento. Esta acción no se puede deshacer. ¿Continuar?',
+      'Eliminar',
+    );
+    if (!ok) return;
+
+    this.eliminando.set(true);
+    try {
+      await this.motos.eliminar(m.id);
+      // Recarga el agregado del garaje: tambien reprograma los recordatorios
+      // para que no lleguen avisos de la moto borrada.
+      await this.datos.cargar(true);
+      await this.notify.success('Moto eliminada.');
+      await this.router.navigateByUrl('/app/garaje', { replaceUrl: true });
+    } catch (error) {
+      await this.notify.error('No se pudo eliminar la moto. Intenta de nuevo.');
+      console.error('[MotoDetailPage] eliminar', error);
+    } finally {
+      this.eliminando.set(false);
+    }
   }
 }

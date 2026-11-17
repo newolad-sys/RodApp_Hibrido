@@ -407,7 +407,7 @@ export class MotoFormPage {
       await this.router.navigateByUrl('/app/garaje');
     } catch (error) {
       if ((error as { code?: string })?.code === '23505') {
-        await this.notify.error('Ya existe una moto registrada con esa placa.');
+        await this.notify.error('Ya tienes una moto registrada con esa placa.');
       } else {
         await this.notify.error('No se pudo registrar la moto. Intenta de nuevo.');
       }

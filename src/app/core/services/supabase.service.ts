@@ -80,6 +80,15 @@ export class SupabaseService {
     return this.client.from('motos').update(cambios).eq('id', motoId);
   }
 
+  /**
+   * Borra la moto. La base elimina en cascada su SOAT, RTM, documentos,
+   * tanqueadas y mantenimientos. Devuelve las filas borradas: si RLS la
+   * bloquea no hay error, solo una lista vacia.
+   */
+  eliminarMoto(motoId: string) {
+    return this.client.from('motos').delete().eq('id', motoId).select('id');
+  }
+
   /* ===================== Documentos legales ======================== */
 
   registrarSoat(soat: SoatInsert) {
