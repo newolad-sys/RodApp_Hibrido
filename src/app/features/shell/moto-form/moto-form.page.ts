@@ -77,16 +77,18 @@ import { RuntResumen, TipoDocumentoRunt } from '@core/models/models';
           <p>Ingresa los datos para empezar el seguimiento de mantenimiento y rendimiento.</p>
         </header>
 
-        <ion-list lines="none" class="campos">
-          <ion-item class="rod-card">
+        <div class="campos">
+          <div class="campo">
+            <label class="etiqueta" for="placa">Placa</label>
             <ion-input
+              id="placa"
+              fill="outline"
+              aria-label="Placa"
               formControlName="placa"
-              label="Placa"
-              labelPlacement="stacked"
               placeholder="Ej. ABC12D"
             ></ion-input>
-          </ion-item>
-        </ion-list>
+          </div>
+        </div>
 
         <!-- Autocompletar desde el RUNT (opcional) -->
         <section class="rod-card runt" [formGroup]="runtForm">
@@ -96,7 +98,7 @@ import { RuntResumen, TipoDocumentoRunt } from '@core/models/models';
             modelo, cilindrada, SOAT y revision tecnomecanica.
           </p>
 
-          <ion-list lines="none" class="campos">
+          <ion-list lines="none" class="campos-runt">
             <ion-item>
               <ion-select
                 formControlName="docType"
@@ -174,47 +176,55 @@ import { RuntResumen, TipoDocumentoRunt } from '@core/models/models';
           }
         </section>
 
-        <ion-list lines="none" class="campos">
-          <ion-item class="rod-card">
+        <div class="campos">
+          <div class="campo">
+            <label class="etiqueta" for="marca">Marca</label>
             <ion-input
+              id="marca"
+              fill="outline"
+              aria-label="Marca"
               formControlName="marca"
-              label="Marca"
-              labelPlacement="stacked"
               placeholder="Ej. Yamaha"
             ></ion-input>
-          </ion-item>
+          </div>
 
-          <ion-item class="rod-card">
+          <div class="campo">
+            <label class="etiqueta" for="modelo">Modelo</label>
             <ion-input
+              id="modelo"
+              fill="outline"
+              aria-label="Modelo"
               formControlName="modelo"
-              label="Modelo"
-              labelPlacement="stacked"
               placeholder="Ej. FZ 2.0"
             ></ion-input>
-          </ion-item>
+          </div>
 
-          <ion-item class="rod-card">
+          <div class="campo">
+            <label class="etiqueta" for="cilindrada">Cilindrada (cc)</label>
             <ion-input
+              id="cilindrada"
+              fill="outline"
+              aria-label="Cilindrada (cc)"
               formControlName="cilindrada"
               type="number"
               inputmode="numeric"
-              label="Cilindrada (cc)"
-              labelPlacement="stacked"
               placeholder="Opcional"
             ></ion-input>
-          </ion-item>
+          </div>
 
-          <ion-item class="rod-card">
+          <div class="campo">
+            <label class="etiqueta" for="odometroInicial">Kilometraje actual</label>
             <ion-input
+              id="odometroInicial"
+              fill="outline"
+              aria-label="Kilometraje actual"
               formControlName="odometroInicial"
               type="number"
               inputmode="numeric"
-              label="Kilometraje actual"
-              labelPlacement="stacked"
               placeholder="0"
             ></ion-input>
-          </ion-item>
-        </ion-list>
+          </div>
+        </div>
 
         <ion-button
           class="rod-btn-primary"
@@ -262,6 +272,41 @@ import { RuntResumen, TipoDocumentoRunt } from '@core/models/models';
         color: var(--rod-text-secondary);
       }
       .campos {
+        display: grid;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      .campo {
+        display: grid;
+        gap: 8px;
+        min-width: 0;
+      }
+      .etiqueta {
+        display: block;
+        padding: 1px 2px;
+        overflow: visible;
+        font-family: var(--rod-font-heading);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.9px;
+        line-height: 1.4;
+        text-transform: uppercase;
+        color: var(--ion-color-primary);
+      }
+      .campo ion-input {
+        --background: var(--rod-surface);
+        --border-color: var(--rod-border);
+        --border-radius: var(--rod-radius-field);
+        --border-width: 1px;
+        --color: var(--rod-text-heading);
+        --highlight-color-focused: var(--ion-color-primary);
+        --padding-start: 14px;
+        --padding-end: 14px;
+        --placeholder-color: var(--rod-text-muted);
+        --placeholder-opacity: 1;
+        min-height: 48px;
+      }
+      .campos-runt {
         background: transparent;
         padding: 0;
       }
@@ -280,7 +325,7 @@ import { RuntResumen, TipoDocumentoRunt } from '@core/models/models';
         color: var(--rod-text-secondary);
         margin: 0 0 8px;
       }
-      .runt .campos ion-item {
+      .runt .campos-runt ion-item {
         --padding-start: 0;
       }
       .resultado {

@@ -129,7 +129,11 @@ export class AuthService {
       password: payload.password,
       options: {
         // Se guarda en `auth.users.user_metadata`; util antes de tener fila en `users`.
-        data: { full_name: [payload.nombre, payload.apellido].filter(Boolean).join(' ').trim() },
+        data: { 
+          nombre: payload.nombre.trim(),
+          apellido: payload.apellido?.trim() || null,
+          full_name: [payload.nombre, payload.apellido].filter(Boolean).join(' ').trim(),
+        },
         emailRedirectTo: this.redirectUrl(),
       },
     });
