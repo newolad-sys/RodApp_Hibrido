@@ -16,6 +16,7 @@ import {
   IonSelectOption,
   IonCheckbox,
   IonSpinner,
+  IonIcon,
 } from '@ionic/angular/standalone';
 
 import { MotosService } from '@core/services/motos.service';
@@ -55,6 +56,7 @@ import { RuntResumen, TipoDocumentoRunt } from '@core/models/models';
     IonSelectOption,
     IonCheckbox,
     IonSpinner,
+    IonIcon,
   ],
   template: `
     <ion-header class="ion-no-border">
@@ -62,12 +64,19 @@ import { RuntResumen, TipoDocumentoRunt } from '@core/models/models';
         <ion-buttons slot="start">
           <ion-back-button defaultHref="/app/garaje" text=""></ion-back-button>
         </ion-buttons>
-        <ion-title>Registrar moto</ion-title>
+        <ion-title>Registro de tu moto</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content [fullscreen]="true">
-      <form class="rod-container" [formGroup]="form" (ngSubmit)="guardar()">
+      <form class="rod-container moto-form" [formGroup]="form" (ngSubmit)="guardar()">
+        <!-- Cabecera del Figma "Registro de tu Moto" -->
+        <header class="intro">
+          <span class="intro-icon"><ion-icon name="bicycle" aria-hidden="true"></ion-icon></span>
+          <h1>Detalles de tu máquina</h1>
+          <p>Ingresa los datos para empezar el seguimiento de mantenimiento y rendimiento.</p>
+        </header>
+
         <ion-list lines="none" class="campos">
           <ion-item class="rod-card">
             <ion-input
@@ -213,18 +222,48 @@ import { RuntResumen, TipoDocumentoRunt } from '@core/models/models';
           expand="block"
           [disabled]="form.invalid || guardando()"
         >
-          Guardar moto
+          Guardar y empezar
+          <ion-icon slot="end" name="checkmark-circle-outline" aria-hidden="true"></ion-icon>
         </ion-button>
       </form>
     </ion-content>
   `,
   styles: [
     `
-      .campos ion-item {
-        margin-bottom: 12px;
-        --background: transparent;
-        --padding-start: 16px;
-        --inner-padding-end: 16px;
+      .moto-form {
+        max-width: 560px;
+        padding-bottom: 40px;
+      }
+      .intro {
+        margin-bottom: 20px;
+      }
+      .intro-icon {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 14px;
+        border-radius: 18px;
+        display: grid;
+        place-items: center;
+        background: var(--rod-accent-soft);
+        color: var(--ion-color-primary);
+        font-size: 36px;
+      }
+      .intro h1 {
+        margin: 0 0 6px;
+        font-family: var(--rod-font-heading);
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--rod-text-heading);
+      }
+      .intro p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--rod-text-secondary);
+      }
+      .campos {
+        background: transparent;
+        padding: 0;
       }
       .runt {
         margin-bottom: 16px;
