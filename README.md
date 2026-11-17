@@ -1,11 +1,13 @@
 # RodApp Híbrido
 
 > ## 🎥 Video demostrativo
-> **[▶ Ver el video de la aplicación (Web + Android)](PEGAR_AQUI_EL_ENLACE_DEL_VIDEO)**
+> **[▶ Video RodApp Hibrido.mp4 — Web + Android](https://unipanamericanaeduco-my.sharepoint.com/:v:/r/personal/cdavidcollazos_ucompensar_edu_co/_layouts/15/stream.aspx?id=%2Fpersonal%2Fcdavidcollazos_ucompensar_edu_co%2FDocuments%2FVideo%20RodApp%20Hibrido.mp4&share=cQoxGRQsap9_S6UfW4GW-ST7EgUDyp_l3OUXENOnMIT69epPOA&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0)**
 >
-> En el video se muestra: ejecución en el navegador (`npm start`), ejecución en Android
+> En el video se muestra: ejecución en el navegador (`ionic serve`), ejecución en Android
 > (emulador / dispositivo real), inicio de sesión (JWT y Google), consumo de APIs de terceros
-> y el CRUD operativo.
+> (mapa, rutas, clima y consulta al RUNT) y el CRUD operativo.
+>
+> _Alojado en el OneDrive institucional de Compensar: se abre con una cuenta @ucompensar.edu.co._
 
 **Aplicación híbrida para la gestión de motocicletas** (garaje, documentos SOAT y
 Tecnomecánica, combustible, mantenimiento, mapa con rutas y clima). Un único código base
@@ -34,6 +36,8 @@ Supabase. Frente al planteamiento inicial se logró:
 - Autenticación completa (registro, login, recuperación de contraseña, Google, logout).
 - Gestión del garaje: motos, SOAT, Tecnomecánica, combustible y mantenimiento, con
   datos reales persistidos en Postgres.
+- Registro de moto **autocompletado desde el RUNT** (placa + documento del propietario):
+  trae marca, modelo, cilindraje, SOAT y Tecnomecánica vigentes.
 - Alertas de vencimiento mediante notificaciones locales.
 - Mapa con búsqueda de lugares, trazado de rutas y pronóstico del clima.
 - Panel de administración (suspender / habilitar usuarios).
@@ -47,7 +51,7 @@ Supabase. Frente al planteamiento inicial se logró:
 |---|---|
 | UI | **Ionic 8** (componentes standalone) + **Angular 18** |
 | Capa nativa | **Capacitor 6** (Android) |
-| Backend | **Supabase** (Auth + Postgres + RLS) — ver [`supabase/README.md`](supabase/README.md) |
+| Backend | **Supabase** (Auth + Postgres + RLS + Edge Functions) — ver [`supabase/README.md`](supabase/README.md) |
 | Estado | Angular **signals** |
 | Mapas | **MapLibre GL** con teselas de OpenStreetMap |
 
@@ -61,6 +65,7 @@ Supabase. Frente al planteamiento inicial se logró:
 | **Open-Meteo** | Pronóstico del clima en la ruta |
 | **OpenStreetMap** | Teselas del mapa |
 | **Geolocalización** (`@capacitor/geolocation`) | Ubicación actual del usuario |
+| **PlacApi** (consulta al RUNT) | Ficha del vehículo, SOAT y Tecnomecánica a partir de la placa. Se consume desde la Edge Function `consulta-runt` para no exponer la API key; incluye caché de 24 h y tope diario por usuario |
 
 ---
 
@@ -69,12 +74,14 @@ Supabase. Frente al planteamiento inicial se logró:
 | Requisito de la entrega | Implementación | Dónde verlo |
 |---|---|---|
 | Login y registro con **JWT** | Supabase Auth emite un JWT (access token + refresh token) al iniciar sesión | `src/app/core/services/auth.service.ts`, `src/app/features/auth/` |
+| **Recuperar contraseña** | Enlace por correo (PKCE) que abre la pantalla de nueva contraseña | `src/app/features/auth/forgot-password/`, `reset-password/` |
 | **Acceso social** (Google) | OAuth con PKCE; en web por redirección, en Android por deep link `com.rodapp.hibrido://` | `auth.service.ts` (`loginWithGoogle`) |
 | **Consumo de APIs** de terceros | Mapas, rutas, geocodificación y clima | `src/app/features/shell/map/` |
+| **Consumo de API** con clave privada | Consulta al RUNT vía PlacApi a través de una Edge Function (la clave nunca llega al navegador) | `supabase/functions/consulta-runt/`, `src/app/core/services/runt.service.ts` |
 | **Sesión persistente** | `@capacitor/preferences` en nativo y `localStorage` en web | `src/app/core/storage/` |
 | **Protección de vistas privadas** | `authGuard`, `guestGuard` y `adminGuard` | `src/app/core/guards/`, `app.routes.ts` |
 | **Logout seguro** | `signOut` de Supabase: elimina la sesión y los tokens del almacenamiento | Pestaña *Perfil* |
-| **CRUD operativo** | Documentos SOAT/RTM: crear, consultar, editar y eliminar; además altas de motos, combustible y mantenimiento | `src/app/features/shell/document-detail/`, `soat-form/`, `rtm-form/` |
+| **CRUD operativo** | Documentos SOAT/RTM: crear, consultar, editar y eliminar. Motos: crear, consultar y eliminar (borra en cascada sus documentos y registros). Altas de combustible y mantenimiento | `src/app/features/shell/document-detail/`, `soat-form/`, `rtm-form/`, `moto-form/`, `moto-detail/` |
 | **Capacitor / Android** | `npx cap sync android` y ejecución nativa | carpeta `android/` |
 | **Historial colaborativo** | Commits de los tres integrantes | pestaña *Commits* del repositorio |
 
@@ -127,7 +134,7 @@ Supabase. Frente al planteamiento inicial se logró:
 ### 5.1 Clonar e instalar
 
 ```bash
-git clone https://github.com/newolad/RodApp_Hibrido.git
+git clone https://github.com/newolad-sys/RodApp_Hibrido.git
 cd RodApp_Hibrido
 npm install
 ```
@@ -135,27 +142,38 @@ npm install
 ### 5.2 Configurar el backend (Supabase)
 
 > ℹ️ Las credenciales commiteadas apuntan al proyecto Supabase
-> `smkhwldylnztluitsciz`, que reemplazó al original (`erttcudseqjrpyathmal`,
-> que dejó de existir en 2026-10). El esquema de `supabase/migrations/` ya está
-> presente en el proyecto nuevo (verificado el 2026-11-10).
+> `smkhwldylnztluitsciz`, que ya tiene aplicadas todas las migraciones de
+> `supabase/migrations/` y la Edge Function desplegada: **para ejecutar la app no hace
+> falta configurar nada**. Los pasos de abajo son solo para montar un proyecto propio.
 > Si la app muestra *"Sin conexión con el servidor"*, revisa primero que el
 > proyecto siga vivo: `curl -i https://smkhwldylnztluitsciz.supabase.co/auth/v1/health`.
 
 1. Edita `src/environments/environment.ts` (y `environment.prod.ts`) con la **URL** y la
    clave pública *anon* de tu proyecto Supabase.
-2. Aplica las migraciones de `supabase/migrations/` (9 tablas + RLS + trigger de perfil):
+2. Aplica las migraciones de `supabase/migrations/` (tablas, RLS, trigger de perfil, panel
+   de administración y caché del RUNT):
 
    ```bash
    npx supabase link --project-ref TU_PROJECT_REF
    npm run db:push
    ```
 
-3. En **Authentication > URL Configuration** agrega estas *Redirect URLs*:
+3. En **Authentication > URL Configuration**, deja la *Site URL* en
+   `http://localhost:8100` y agrega estas *Redirect URLs*:
    - `http://localhost:8100/auth/callback`
+   - `http://localhost:8100/auth/restablecer`
    - `com.rodapp.hibrido://auth/callback`
    - `com.rodapp.hibrido://auth/restablecer`
-4. En **Authentication > Sign In / Providers** habilita **Google** con las credenciales
-   de Google Cloud.
+4. En **Authentication > Sign In / Providers** habilita **Google** con el *Client ID* y el
+   *Client Secret* de un cliente OAuth "Aplicación web" de Google Cloud, cuya URI de
+   redirección autorizada sea `https://TU_PROJECT_REF.supabase.co/auth/v1/callback`.
+5. Despliega la consulta al RUNT. Sin secretos funciona en **modo `mock`** (datos de
+   prueba); para datos reales se necesita una API key de [PlacApi](https://placapi.com):
+
+   ```bash
+   npx supabase functions deploy consulta-runt
+   npx supabase secrets set PLACAPI_MODE=live PLACAPI_KEY=pk_live_...   # opcional
+   ```
 
 > **Nota:** si *Confirm email* está activo, el registro envía un correo de confirmación. Con
 > el correo por defecto de Supabase el envío es limitado; para pruebas se puede desactivar
@@ -164,7 +182,8 @@ npm install
 ### 5.3 Ejecutar en el navegador
 
 ```bash
-npm start            # equivale a `ionic serve` → http://localhost:8100
+ionic serve          # → http://localhost:8100 (requiere `npm i -g @ionic/cli`)
+npm start            # alternativa sin la CLI de Ionic, mismo puerto
 ```
 
 ### 5.4 Compilar
@@ -206,7 +225,7 @@ src/app/
     ├── admin/                   # panel de administración de usuarios
     └── shell/                   # tabs: inicio · garaje · mapa · historial · perfil
                                  # + formularios (moto, SOAT, RTM, combustible, mantenimiento)
-supabase/                      # migraciones SQL, configuración y funciones
+supabase/                      # migraciones SQL, configuración y Edge Function consulta-runt
 android/                       # proyecto nativo generado por Capacitor
 ```
 
@@ -216,6 +235,10 @@ android/                       # proyecto nativo generado por Capacitor
 
 - El servidor público de OSRM y Nominatim son de uso moderado; en producción conviene un
   servidor propio o un proveedor de pago.
+- La consulta al RUNT con datos reales consume créditos de PlacApi (1 por consulta); sin
+  créditos se usa el modo `mock`, que devuelve datos de prueba marcados como ficticios.
+- El inicio de sesión con Google está en modo *Prueba* en Google Cloud: solo pueden entrar
+  las cuentas registradas como usuarios de prueba hasta publicar la aplicación.
 - Versión iOS no probada (no se dispuso de macOS).
 - Pruebas automáticas limitadas.
 
